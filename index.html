@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Magazzino Sfridi Almatech</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>html,body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Almatech srl · semilavorati plastici e metallici</span>
+      <h1>Magazzino <span>sfridi</span></h1>
+    </div>
+    <div class="topactions" id="topActions" hidden>
+      <span class="usermenu"><span id="whoName"></span> <span class="tag acc" id="whoRole"></span></span>
+      <button class="btn" id="btnExport" type="button">Scarica Excel</button>
+      <button class="btn primary" id="btnLoad" type="button">+ Carica sfrido</button>
+      <button class="btn ghost small" id="btnAccount" type="button">Account</button>
+    </div>
+  </header>
+
+  <div class="syncbar" id="syncbar"><span class="pulse" id="syncDot"></span><span id="syncText">Avvio…</span></div>
+
+  <section class="gate" id="gate" hidden></section>
+
+  <form class="login" id="login" hidden autocomplete="on">
+    <h2>Accedi al magazzino</h2>
+    <p>Usa l'email e la password che ti ha dato il responsabile.</p>
+    <div class="field"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="username" required></div>
+    <div class="field" id="lPwdBox"><label for="lPwd">Password</label><input id="lPwd" type="password" autocomplete="current-password"></div>
+    <div class="err" id="lErr"></div><div class="ok" id="lOk"></div>
+    <div class="actions"><button class="btn primary" type="submit" id="lGo">Accedi</button></div>
+    <button class="linkbtn" type="button" id="lLink">Non ricordi la password? Ricevi un link di accesso via email</button>
+  </form>
+
+  <div id="app" hidden style="display:grid;gap:18px">
+  <section class="kpis" id="kpis" aria-label="Situazione magazzino"></section>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="mag" aria-selected="true" id="tab-mag">Magazzino</button>
+    <button role="tab" data-tab="mov" aria-selected="false" id="tab-mov">Movimenti</button>
+    <button role="tab" data-tab="mat" aria-selected="false" id="tab-mat">Materiali e prezzi</button>
+    <button role="tab" data-tab="chk" aria-selected="false" id="tab-chk">Da verificare <span class="count" id="chkCount"></span></button>
+    <button role="tab" data-tab="usr" aria-selected="false" id="tab-usr" class="respOnly">Utenti <span class="count" id="usrCount"></span></button>
+  </nav>
+
+  <section id="p-mag" class="panel" style="display:grid;gap:14px">
+    <form class="finder" id="finder" autocomplete="off">
+      <div>
+        <h2>Trova lo sfrido giusto</h2>
+        <p>Inserisci la misura del pezzo da ricavare: ti mostro gli sfridi che bastano, prima quelli con spessore o diametro più vicino e meno materiale da togliere.</p>
+      </div>
+      <div class="fields">
+        <div class="field"><label for="fForma">Forma</label>
+          <select id="fForma"><option value="LASTRA">Lastra</option><option value="TONDO">Tondo</option><option value="TUBO">Tubo</option></select></div>
+        <div class="field"><label for="fGrado">Materiale</label><select id="fGrado"></select></div>
+        <div class="field dimL"><label for="fSp">Spessore min (mm)</label><input type="number" id="fSp" min="0" step="0.5"></div>
+        <div class="field dimL"><label for="fLa">Larghezza min</label><input type="number" id="fLa" min="0"></div>
+        <div class="field dimT" hidden><label for="fDe">Ø est min (mm)</label><input type="number" id="fDe" min="0"></div>
+        <div class="field dimU" hidden><label for="fDi">Ø int max</label><input type="number" id="fDi" min="0"></div>
+        <div class="field"><label for="fLu">Lunghezza min</label><input type="number" id="fLu" min="0"></div>
+        <button class="btn primary" type="submit" id="fGo">Cerca</button>
+        <button class="btn ghost" type="button" id="fClear" hidden>Mostra tutto</button>
+      </div>
+    </form>
+
+    <div class="toolbar">
+      <div class="chips" id="formaChips">
+        <button class="chip" data-f="" aria-pressed="true" type="button">Tutti</button>
+        <button class="chip" data-f="LASTRA" aria-pressed="false" type="button">Lastre</button>
+        <button class="chip" data-f="TONDO" aria-pressed="false" type="button">Tondi</button>
+        <button class="chip" data-f="TUBO" aria-pressed="false" type="button">Tubi</button>
+        <button class="chip" data-f="ZERO" aria-pressed="false" type="button">Esauriti</button>
+      </div>
+      <input class="search" id="q" type="search" placeholder="Cerca codice, materiale, misura…" aria-label="Cerca">
+    </div>
+    <div class="tablebox"><table>
+      <thead><tr><th>Codice</th><th>Materiale</th><th>Misura (mm)</th><th class="r">Pezzi</th><th class="r">Peso kg</th><th class="r">Valore €</th><th>Ubicazione</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+    <div class="foot"><span id="shown"></span></div>
+  </section>
+
+  <section id="p-mov" class="panel" hidden style="display:grid;gap:14px">
+    <div class="tablebox"><table>
+      <thead><tr><th>Data</th><th>Tipo</th><th>Codice</th><th>Materiale</th><th>Misura</th><th class="r">Pezzi</th><th>Commessa</th><th>Operatore</th><th>Note</th></tr></thead>
+      <tbody id="movRows"></tbody>
+    </table></div>
+    <div class="foot"><span>Ultimi 500 movimenti. Lo storico completo è nel file di “Scarica Excel”.</span></div>
+  </section>
+
+  <section id="p-mat" class="panel" hidden style="display:grid;gap:14px">
+    <div class="notice" id="priceNotice"></div>
+    <div class="importbox respOnly">
+      <div style="display:grid;gap:4px;min-width:0">
+        <b>Aggiorna i prezzi da un file</b>
+        <span class="calc">1. Scarica il listino: è un Excel con tutti i materiali e i valori attuali. 2. Compila o correggi le colonne €/kg e peso specifico. 3. Importalo: prima di salvare ti mostro cosa cambia. Va bene anche un file vostro, purché abbia una colonna con il materiale e una con il prezzo.</span>
+      </div>
+      <div class="topactions">
+        <button class="btn" id="btnTemplate" type="button">Scarica listino</button>
+        <label class="btn primary" for="fileImport">Importa listino…</label>
+        <input id="fileImport" type="file" accept=".xlsx,.xls,.csv" class="visually-hidden">
+      </div>
+    </div>
+    <div class="tablebox"><table class="mats">
+      <thead><tr><th>Grado</th><th>Famiglia</th><th class="r">Peso specifico g/cm³</th><th class="r">€/kg</th><th class="r">Lotti</th><th class="r">Peso kg</th><th class="r">Valore €</th><th>Note</th></tr></thead>
+      <tbody id="matRows"></tbody>
+    </table></div>
+  </section>
+
+  <section id="p-chk" class="panel" hidden style="display:grid;gap:14px">
+    <p style="margin:0;color:var(--muted)">Righe del vecchio inventario scritte in modo ambiguo. Il valore assunto è già in magazzino: controlla e, se serve, correggi con “Preleva → Correggi conteggio”. Il responsabile le segna come verificate.</p>
+    <div class="checks" id="chkList"></div>
+  </section>
+
+  <section id="p-usr" class="panel" hidden style="display:grid;gap:14px">
+    <p style="margin:0;color:var(--muted)">Chi entra per la prima volta resta in attesa finché non lo attivi qui. Per aggiungere una persona: Supabase → Authentication → Users → “Invite user” (vedi la guida nel README).</p>
+    <div class="tablebox"><table class="users">
+      <thead><tr><th>Email</th><th>Nome</th><th>Ruolo</th><th>Stato</th></tr></thead>
+      <tbody id="usrRows"></tbody>
+    </table></div>
+  </section>
+  </div>
+
+  <div class="foot">
+    <span>Flowline per Almatech</span>
+  </div>
+</div>
+
+<div class="overlay" id="ov" hidden><div class="modal" role="dialog" aria-modal="true" id="modal"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
