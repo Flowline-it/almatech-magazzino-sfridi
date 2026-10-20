@@ -26,6 +26,17 @@
     </div>
   </header>
 
+  <div class="demobar" id="demobar" hidden>
+    <span><b>Modalità dimostrazione.</b> Inventario reale al 13/10/2026, prezzi di esempio. Le prove restano solo in questo browser: niente viene salvato altrove.</span>
+    <span class="demoactions">
+      <span class="seg" role="group" aria-label="Vedi l'app come">
+        <button type="button" data-demo-as="responsabile@demo.it" aria-pressed="true">Responsabile</button>
+        <button type="button" data-demo-as="operatore@demo.it" aria-pressed="false">Operatore</button>
+      </span>
+      <button class="btn small" type="button" id="demoReset">Ripristina dati demo</button>
+    </span>
+  </div>
+
   <div class="syncbar" id="syncbar"><span class="pulse" id="syncDot"></span><span id="syncText">Avvio…</span></div>
 
   <section class="gate" id="gate" hidden></section>
@@ -33,6 +44,7 @@
   <form class="login" id="login" hidden autocomplete="on">
     <h2>Accedi al magazzino</h2>
     <p>Usa l'email e la password che ti ha dato il responsabile.</p>
+    <p class="notice" id="lDemo" hidden></p>
     <div class="field"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="username" required></div>
     <div class="field" id="lPwdBox"><label for="lPwd">Password</label><input id="lPwd" type="password" autocomplete="current-password"></div>
     <div class="err" id="lErr"></div><div class="ok" id="lOk"></div>
@@ -121,7 +133,7 @@
   </section>
 
   <section id="p-usr" class="panel" hidden style="display:grid;gap:14px">
-    <p style="margin:0;color:var(--muted)">Chi entra per la prima volta resta in attesa finché non lo attivi qui. Per aggiungere una persona: Supabase → Authentication → Users → “Invite user” (vedi la guida nel README).</p>
+    <p style="margin:0;color:var(--muted)" id="usrHint">Chi entra per la prima volta resta in attesa finché non lo attivi qui. Per aggiungere una persona: Supabase → Authentication → Users → “Invite user” (vedi la guida nel README).</p>
     <div class="tablebox"><table class="users">
       <thead><tr><th>Email</th><th>Nome</th><th>Ruolo</th><th>Stato</th></tr></thead>
       <tbody id="usrRows"></tbody>
@@ -137,9 +149,11 @@
 <div class="overlay" id="ov" hidden><div class="modal" role="dialog" aria-modal="true" id="modal"></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="config.js"></script>
-<script src="app.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer src="config.js"></script>
+<script defer src="demo-data.js"></script>
+<script defer src="demo.js"></script>
+<script defer src="app.js"></script>
 </body>
 </html>

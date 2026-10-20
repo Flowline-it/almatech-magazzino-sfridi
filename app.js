@@ -16,7 +16,7 @@ const COLORS = [['AZZURRO', '#6db3e6'], ['BIANCO', '#f6f6f2'], ['NERO', '#23272b
 const $ = id => document.getElementById(id);
 
 const S = {
-  sb: null, user: null, prof: null, resp: false,
+  sb: null, demo: false, user: null, prof: null, resp: false,
   lots: [], mats: [], movs: [], users: [],
   loaded: false, channel: null, poll: null,
 };
@@ -380,11 +380,11 @@ function accountModal() {
   openModal(`
     <h3>Il tuo account</h3>
     <div class="lotcard"><b>${esc(S.prof.nome || S.user.email)}</b><span class="calc">${esc(S.user.email)} · ${S.resp ? 'Responsabile' : 'Operatore'}</span></div>
-    <div class="fields"><div class="field wide"><label for="aPwd">Nuova password (almeno 8 caratteri)</label><input id="aPwd" type="password" autocomplete="new-password" minlength="8"></div>
-    <button class="btn" type="button" id="aSet">Salva password</button></div>
+    ${S.demo ? '<p class="calc" style="margin:0">Nella demo la password è “demo” per tutti. Per cambiare punto di vista usa i pulsanti Responsabile / Operatore in alto.</p>' : `<div class="fields"><div class="field wide"><label for="aPwd">Nuova password (almeno 8 caratteri)</label><input id="aPwd" type="password" autocomplete="new-password" minlength="8"></div>
+    <button class="btn" type="button" id="aSet">Salva password</button></div>`}
     <div class="err" id="aErr"></div><div class="ok" id="aOk"></div>
     <div class="actions"><button class="btn ghost" type="button" data-close>Chiudi</button><button class="btn danger" type="button" id="aOut">Esci</button></div>`);
-  $('aSet').onclick = async () => {
+  if ($('aSet')) $('aSet').onclick = async () => {
     const p = $('aPwd').value; $('aErr').textContent = ''; $('aOk').textContent = '';
     if (p.length < 8) { $('aErr').textContent = 'La password deve avere almeno 8 caratteri.'; return; }
     const {error} = await S.sb.auth.updateUser({password: p});
@@ -577,7 +577,7 @@ function startLive() {
   const ch = S.sb.channel('magazzino');
   ['lotti', 'materiali', 'movimenti', 'profili'].forEach(t => ch.on('postgres_changes', {event: '*', schema: 'public', table: t}, () => refresh(t)));
   ch.subscribe(status => {
-    if (status === 'SUBSCRIBED') { sync('live', 'Dati condivisi · aggiornati in tempo reale'); if (S.poll) { clearInterval(S.poll); S.poll = null; } }
+    if (status === 'SUBSCRIBED') { sync('live', S.demo ? 'Demo attiva · i calcoli funzionano come nella versione definitiva' : 'Dati condivisi · aggiornati in tempo reale'); if (S.poll) { clearInterval(S.poll); S.poll = null; } }
     else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
       sync('busy', 'Aggiornamento automatico in pausa: i dati si ricaricano ogni 30 secondi');
       if (!S.poll) S.poll = setInterval(() => refresh('lotti', 'materiali', 'movimenti', 'profili'), 30000);
@@ -587,7 +587,7 @@ function startLive() {
 }
 
 async function enter(session) {
-  S.user = session.user;
+  S.user = session.user; S.loaded = false;
   sync('busy', 'Caricamento del magazzino…');
   const {data: prof, error} = await S.sb.from('profili').select('*').eq('id', S.user.id).maybeSingle();
   if (error) { gate('Errore di collegamento', errMsg(error)); sync('off', 'Non collegato'); return; }
@@ -605,26 +605,58 @@ async function enter(session) {
   try {
     await Promise.all([loadLots(), loadMats(), loadMovs(), loadUsers()]);
   } catch (e) { gate('Errore di collegamento', errMsg(e)); sync('off', 'Non collegato'); return; }
-  S.loaded = true; show('app'); renderAll(); startLive();
+  S.loaded = true; show('app'); markDemoRole(); renderAll(); startLive();
 }
 function leave() {
   stopLive();
   Object.assign(S, {user: null, prof: null, resp: false, lots: [], mats: [], movs: [], users: [], loaded: false});
   document.body.classList.remove('resp');
-  closeModal();
+  closeModal(); markDemoRole();
   sync('off', 'Non collegato'); show('login');
+}
+
+function setupDemo() {
+  $('demobar').hidden = false;
+  const u = window.DemoBackend.UTENTI.map(x => x.email).join(' oppure ');
+  $('lDemo').hidden = false;
+  $('lDemo').textContent = `Demo: entra con ${u} e password “${window.DemoBackend.PASSWORD}”.`;
+  $('usrHint').textContent = 'Nella demo gli utenti sono di esempio. Prova ad attivare “nuovo.utente@demo.it” o a cambiare un ruolo.';
+  $('demobar').addEventListener('click', async e => {
+    const b = e.target.closest('[data-demo-as]');
+    if (b) { if (S.user && S.user.email === b.dataset.demoAs) return; await S.sb.auth.signInWithPassword({email: b.dataset.demoAs, password: window.DemoBackend.PASSWORD}); return; }
+    const r = e.target.closest('#demoReset'); if (!r) return;
+    if (!r.dataset.arm) {
+      r.dataset.arm = '1'; r.textContent = 'Clicca di nuovo per confermare';
+      setTimeout(() => { if (r.dataset.arm) { delete r.dataset.arm; r.textContent = 'Ripristina dati demo'; } }, 4000);
+      return;
+    }
+    delete r.dataset.arm; r.textContent = 'Ripristina dati demo';
+    window.DemoBackend.reset(); F = {forma: '', q: '', fit: null}; $('q').value = ''; $('fClear').hidden = true;
+    await refresh('lotti', 'materiali', 'movimenti', 'profili'); toast('Dati demo riportati all\'inventario del 13/10/2026');
+  });
+}
+function markDemoRole() {
+  if (!S.demo) return;
+  document.querySelectorAll('[data-demo-as]').forEach(b => b.setAttribute('aria-pressed', !!S.user && b.dataset.demoAs === S.user.email));
 }
 
 (async function boot() {
   const C = window.APP_CONFIG || {};
-  if (!window.supabase || !C.SUPABASE_URL || /INSERISCI/.test(C.SUPABASE_URL) || !C.SUPABASE_ANON_KEY || /INSERISCI/.test(C.SUPABASE_ANON_KEY)) {
-    sync('off', 'Configurazione mancante');
-    gate('Configurazione mancante', window.supabase
-      ? 'Apri il file config.js e inserisci Project URL e chiave anon del progetto Supabase (vedi README, passo 3).'
-      : 'Non riesco a caricare le librerie necessarie. Controlla la connessione e ricarica la pagina.');
-    return;
+  if ((C.MODALITA || 'demo') !== 'supabase') {
+    if (!window.DemoBackend) { sync('off', 'Demo non disponibile'); gate('Demo non disponibile', 'Mancano i file demo.js o demo-data.js accanto a index.html.'); return; }
+    S.demo = true;
+    S.sb = window.DemoBackend.createClient();
+    setupDemo();
+  } else {
+    if (!window.supabase || !C.SUPABASE_URL || /INSERISCI/.test(C.SUPABASE_URL) || !C.SUPABASE_ANON_KEY || /INSERISCI/.test(C.SUPABASE_ANON_KEY)) {
+      sync('off', 'Configurazione mancante');
+      gate('Configurazione mancante', window.supabase
+        ? 'Apri il file config.js e inserisci Project URL e chiave anon del progetto Supabase (vedi README).'
+        : 'Non riesco a caricare le librerie necessarie. Controlla la connessione e ricarica la pagina.');
+      return;
+    }
+    S.sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
   }
-  S.sb = window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
   let current; // undefined finché non arriva il primo stato (anche "nessun accesso")
   S.sb.auth.onAuthStateChange((event, session) => {
     const uid = session && session.user ? session.user.id : null;
@@ -632,4 +664,8 @@ function leave() {
     current = uid;
     if (uid) setTimeout(() => enter(session), 0); else leave();
   });
+  if (S.demo) {
+    // prima apertura della demo: entra direttamente come responsabile
+    setTimeout(async () => { if (current === null) await S.sb.auth.signInWithPassword({email: 'responsabile@demo.it', password: window.DemoBackend.PASSWORD}); }, 50);
+  }
 })();
