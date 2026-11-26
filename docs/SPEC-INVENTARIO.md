@@ -73,5 +73,6 @@ Lo stesso codice può stare in più depositi (es. `BTPP100G` nel deposito 01 e n
 - Si contano **tutti i depositi** e **anche gli articoli con giacenza 0**. ✔ filtro «solo giacenza ≠ 0» spento di default; l'avanzamento è su tutti gli articoli.
 - Giacenze negative: si contano **normalmente**. ✔ nessuna regola speciale.
 - **Una sola persona** conta: il collaudo con più persone insieme non è prioritario.
-- Articoli a peso (KG): serve una **trasformazione in base ai pesi specifici dei materiali**, come nei file Excel del magazzino sfridi. ⏳ da chiarire con Riotti cosa si misura (vedi sotto).
-- Ancora senza risposta: come G7 reimporta il file (domanda 1) e se gli sfridi entrano nell'inventario (domanda 6).
+- Articoli a peso (KG): serve una **trasformazione in base ai pesi specifici dei materiali**, come nei file Excel del magazzino sfridi. ✔ Riotti: per le barre si contano i **metri**, per le lastre i **pezzi**; G7 non fa calcoli, basta calcolare con i pesi specifici. Fatto (`inventario-peso.js`); da confermare con lui i pesi specifici dei metalli.
+- Reimport in G7: oggi si fa a mano e non l'hanno mai provato: va **testato** con un file di prova (3-4 giacenze cambiate).
+- Ancora senza risposta: se gli sfridi entrano nell'inventario (domanda 6).
