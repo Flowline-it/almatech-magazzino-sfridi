@@ -57,7 +57,7 @@ Apri la scheda **Inventario**.
 
 **Chi conta (anche da telefono)**
 1. Apri l'inventario con **Conta**.
-2. Filtra per deposito o gruppo, oppure cerca per codice o descrizione. Di solito si parte da “Solo giacenza ≠ 0”, già acceso.
+2. Filtra per deposito o gruppo, oppure cerca per codice o descrizione. Vanno verificati **tutti** gli articoli, anche quelli con giacenza 0. Per vedere prima solo quelli con giacenza, accendi “Solo giacenza ≠ 0”.
 3. Per ogni articolo guarda quanto c'è davvero:
    - **OK**: la quantità è quella di G7;
    - **Diverso**: scrivi la quantità contata col tastierino (i decimali si usano solo per KG, MT, MQ…);
