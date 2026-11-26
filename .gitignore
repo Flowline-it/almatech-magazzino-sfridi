@@ -6,3 +6,7 @@ __pycache__/
 .env
 .env.*
 config.local.js
+
+# Dati reali del cliente (file Excel G7): non vanno mai su git
+dati-locali/*
+!dati-locali/.gitkeep
