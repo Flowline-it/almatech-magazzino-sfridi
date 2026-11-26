@@ -22,3 +22,4 @@ Il team Flowline non ha un background tecnico. Spiega sempre in italiano semplic
 - Un branch per ogni funzione, poi una pull request verso `main`.
 - Prima di dire "fatto", prova il percorso completo nel browser, anche su schermo da telefono.
 - Fuori dal repository (preventivi, call, decisioni col cliente) si lavora nel progetto Claude "ALMATECH SRL".
+- Quando cambi un file `.js` o `.css`, aggiorna il numero di versione `?v=…` negli indirizzi in `index.html`: altrimenti il browser può mescolare file vecchi e nuovi e una scheda si apre vuota.
