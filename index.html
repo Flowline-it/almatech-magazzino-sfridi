@@ -59,6 +59,7 @@
     <button role="tab" data-tab="mag" aria-selected="true" id="tab-mag">Magazzino</button>
     <button role="tab" data-tab="mov" aria-selected="false" id="tab-mov">Movimenti</button>
     <button role="tab" data-tab="mat" aria-selected="false" id="tab-mat">Materiali e prezzi</button>
+    <button role="tab" data-tab="inv" aria-selected="false" id="tab-inv">Inventario</button>
     <button role="tab" data-tab="chk" aria-selected="false" id="tab-chk">Da verificare <span class="count" id="chkCount"></span></button>
     <button role="tab" data-tab="usr" aria-selected="false" id="tab-usr" class="respOnly">Utenti <span class="count" id="usrCount"></span></button>
   </nav>
@@ -127,6 +128,8 @@
     </table></div>
   </section>
 
+  <section id="p-inv" class="panel" hidden style="display:grid;gap:14px"></section>
+
   <section id="p-chk" class="panel" hidden style="display:grid;gap:14px">
     <p style="margin:0;color:var(--muted)">Righe del vecchio inventario scritte in modo ambiguo. Il valore assunto è già in magazzino: controlla e, se serve, correggi con “Preleva → Correggi conteggio”. Il responsabile le segna come verificate.</p>
     <div class="checks" id="chkList"></div>
@@ -151,9 +154,13 @@
 
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script defer src="config.js"></script>
 <script defer src="demo-data.js"></script>
 <script defer src="demo.js"></script>
 <script defer src="app.js"></script>
+<script defer src="inventario-xlsx.js"></script>
+<script defer src="inventario-store.js"></script>
+<script defer src="inventario.js"></script>
 </body>
 </html>

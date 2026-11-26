@@ -45,3 +45,30 @@ La differenza viene registrata come **rettifica** nello storico.
 ## Inventario di fine anno
 
 **Scarica Excel** produce un file con tre fogli: *Magazzino* (ogni lotto con peso e valore), *Riepilogo* (per materiale) e *Movimenti* (storico completo).
+
+## Inventario con l'export di G7
+
+Apri la scheda **Inventario**.
+
+**Il responsabile prepara l'inventario**
+1. In G7 esporta l'elenco articoli in Excel.
+2. In **Inventario** premi **Importa export G7…** e scegli il file.
+3. Controlla i numeri (articoli, depositi, gruppi, giacenze ≠ 0, negativi): devono tornare con G7. Poi **Crea inventario**.
+
+**Chi conta (anche da telefono)**
+1. Apri l'inventario con **Conta**.
+2. Filtra per deposito o gruppo, oppure cerca per codice o descrizione. Di solito si parte da “Solo giacenza ≠ 0”, già acceso.
+3. Per ogni articolo guarda quanto c'è davvero:
+   - **OK**: la quantità è quella di G7;
+   - **Diverso**: scrivi la quantità contata col tastierino (i decimali si usano solo per KG, MT, MQ…);
+   - **Non trovato**: non c'è, vale 0.
+   Sbagliato? Premi **annulla** sotto la riga.
+4. In alto vedi l'avanzamento. Un articolo trovato ma non presente in G7: **+ Articolo non in G7** (è solo una segnalazione).
+5. Se due persone contano lo stesso articolo vale l'ultimo conteggio e compare un avviso.
+
+**Il responsabile chiude**
+1. **Riepilogo e chiusura** mostra le differenze; **Scarica differenze** le salva in Excel.
+2. **Chiudi inventario…**: da quel momento non si può più modificare.
+3. **Scarica file per G7**: ha la stessa struttura dell'export di G7 e cambia solo la colonna *Esistenza* degli articoli con differenza. Gli articoli non verificati restano come in G7. Reimportalo in G7.
+
+Prima della chiusura il file per G7 si chiama “PROVVISORIO”: non reimportarlo in G7.
