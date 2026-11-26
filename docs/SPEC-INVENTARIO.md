@@ -67,3 +67,11 @@ Lo stesso codice può stare in più depositi (es. `BTPP100G` nel deposito 01 e n
 5. Quante persone contano insieme? Si dividono per deposito, gruppo o zona?
 6. Gli sfridi del primo modulo devono entrare in questo inventario o restano separati?
 7. Gli articoli a KG si pesano, o basta confermare a vista?
+
+## Risposte di Almatech (26/11/2026)
+- Articoli non presenti in G7: restano **solo segnalazioni**. ✔ già così.
+- Si contano **tutti i depositi** e **anche gli articoli con giacenza 0**. ✔ filtro «solo giacenza ≠ 0» spento di default; l'avanzamento è su tutti gli articoli.
+- Giacenze negative: si contano **normalmente**. ✔ nessuna regola speciale.
+- **Una sola persona** conta: il collaudo con più persone insieme non è prioritario.
+- Articoli a peso (KG): serve una **trasformazione in base ai pesi specifici dei materiali**, come nei file Excel del magazzino sfridi. ⏳ da chiarire con Riotti cosa si misura (vedi sotto).
+- Ancora senza risposta: come G7 reimporta il file (domanda 1) e se gli sfridi entrano nell'inventario (domanda 6).

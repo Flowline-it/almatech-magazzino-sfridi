@@ -20,7 +20,7 @@
 
   const I = {
     store: null, userId: null, sess: [], cur: null, rows: [], byN: new Map(), segn: [], view: [], since: '', poll: null,
-    f: {dep: '', gr: '', nz: true, st: '', neg: false, q: ''}, tot: 0, fatti: 0, raf: 0, ready: false, busy: false,
+    f: {dep: '', gr: '', nz: false, st: '', neg: false, q: ''}, tot: 0, fatti: 0, raf: 0, ready: false, busy: false,
   };
   const root = () => $('p-inv');
 
@@ -101,7 +101,7 @@
     } catch (e) { toast(errMsg(e)); await caricaElenco(); return; }
     I.byN = new Map(I.rows.map(r => [r.n, r])); I.rows.forEach(r => { r.k = norm(r.c + r.d); });
     I.since = I.rows.reduce((m, r) => r.at > m ? r.at : m, '');
-    I.f = {dep: '', gr: '', nz: true, st: '', neg: false, q: ''};
+    I.f = {dep: '', gr: '', nz: false, st: '', neg: false, q: ''};
     disegnaDettaglio(); avviaPoll();
   }
   function opzioni(valori, vuotoTesto, sel) {
@@ -148,12 +148,13 @@
     if (!I.view.length) l.style.height = '60px', l.innerHTML = '<p class="calc" style="padding:16px">Nessun articolo con questi filtri.</p>';
   }
   function aggiornaProgresso() {
-    let tot = 0, fatti = 0, tuttiFatti = 0;
-    for (const r of I.rows) { if (r.st !== 'da') tuttiFatti++; if (r.g7 !== 0) { tot++; if (r.st !== 'da') fatti++; } }
-    I.tot = tot; I.fatti = fatti;
+    // Almatech: si verificano TUTTI gli articoli, anche con giacenza 0
+    let fatti = 0, totG = 0, fattiG = 0;
+    for (const r of I.rows) { if (r.st !== 'da') fatti++; if (r.g7 !== 0) { totG++; if (r.st !== 'da') fattiG++; } }
+    const tot = I.rows.length; I.tot = tot; I.fatti = fatti;
     const p = tot ? Math.round(fatti / tot * 100) : 0;
     $('invBar').style.width = p + '%';
-    $('invProgTxt').innerHTML = `<b>${fi(fatti)} / ${fi(tot)}</b> verificati tra gli articoli con giacenza${tuttiFatti !== fatti ? ` · in tutto ${fi(tuttiFatti)} contati` : ''}`;
+    $('invProgTxt').innerHTML = `<b>${fi(fatti)} / ${fi(tot)}</b> articoli verificati · con giacenza: ${fi(fattiG)} / ${fi(totG)}`;
   }
 
   /* lista "a finestra": disegna solo le righe che si vedono (12.000 righe tutte insieme bloccherebbero il telefono) */
