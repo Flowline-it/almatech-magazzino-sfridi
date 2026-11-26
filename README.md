@@ -49,14 +49,32 @@ Nella scheda *Utenti* c'è anche `nuovo.utente@demo.it`, in attesa di attivazion
 
 Non è collegata a G7 Suite (scelta concordata, ottobre 2026).
 
+## Inventario (scheda **Inventario**)
+
+Flusso: **export da G7 → import nell'app → conteggio da telefono → chiusura → Excel per G7**. Specifica completa in `docs/SPEC-INVENTARIO.md`.
+
+- **Import**: il responsabile carica l'export di G7. L'app legge depositi, gruppi e articoli, scarta la riga del totale e mostra i numeri da confrontare con G7. Se le intestazioni non sono quelle attese si ferma con un messaggio.
+- **Conteggio**: elenco pensato per il telefono, con ricerca (ignora maiuscole e spazi), filtri per deposito, gruppo, stato, “solo giacenza ≠ 0” (acceso di default) e negativi. Per ogni articolo: **OK**, **Diverso** (tastierino, decimali tranne che per PZ) o **Non trovato** (= 0). Si annota chi ha contato e quando. Gli articoli trovati ma assenti in G7 sono solo segnalazioni.
+- **Chiusura ed export**: riepilogo delle differenze (scaricabile) e **file per G7**. Il file parte dall'originale e cambia **solo la colonna Esistenza** degli articoli con giacenza diversa: righe di sezione, ordine, stili, formula del totale e nome del foglio restano uguali. Gli articoli non verificati mantengono la giacenza di G7. A inventario chiuso non si modifica più.
+- **Demo**: i dati stanno nell'archivio del browser (IndexedDB), solo su quel dispositivo. **Supabase**: il codice e lo schema sono pronti (`003_inventario.sql`) ma **non sono mai stati provati su un progetto vero**: vanno collaudati alla prima attivazione.
+
+Prova automatica dell'import/export sul file vero (non è nel repository, sta in `dati-locali/`):
+
+```
+npm i jszip
+node tools/test_inventario_xlsx.js dati-locali/export_g7_26_11_2026.xlsx
+```
+
 ## Com'è fatta
 
 | Parte | File | Cosa |
 |---|---|---|
 | Pagina web | `index.html`, `style.css`, `app.js` | Sito statico, nessuna compilazione. Librerie da CDN: SheetJS 0.18.5 (Excel), supabase-js 2.45.4 (solo modalità Supabase) |
 | Impostazioni | `config.js` | `MODALITA: 'demo'` oppure `'supabase'`, più indirizzo e chiave del progetto Supabase |
+| Inventario | `inventario.js`, `inventario-xlsx.js`, `inventario-store.js` | Scheda **Inventario**: schermate, lettura/scrittura del file G7 (JSZip 3.10.1 da CDN), salvataggio dati (demo: archivio del browser; Supabase: tabelle e Storage) |
 | Demo | `demo.js`, `demo-data.js` | Archivio nel browser con le stesse regole del database; dati iniziali (22 materiali, 278 lotti) |
 | Database | `supabase/migrations/001_schema.sql` | Tabelle, permessi per ruolo, funzioni di prelievo/carico/rettifica |
+| Database inventario | `supabase/migrations/003_inventario.sql` | Tabelle `inventari`, `inventario_righe`, `inventario_segnalazioni`, archivio del file originale e permessi. **Non ancora eseguito**: si lancia dopo `001`, solo con l'ok di Almatech |
 | Dati iniziali | `supabase/seed/002_dati_iniziali.sql` | Gli stessi 22 materiali e 278 lotti, per Supabase |
 | Strumenti | `tools/` | Script Python usati per leggere i 25 Excel originali e generare i dati |
 | Guida operatori | `docs/GUIDA-UTENTE.md` | Istruzioni d'uso per chi lavora in magazzino |
@@ -94,6 +112,7 @@ Servono un account [Supabase](https://supabase.com) e uno [Netlify](https://netl
 1. Supabase → **SQL Editor** → **New query**.
 2. Copia tutto il contenuto di `supabase/migrations/001_schema.sql`, incollalo e premi **Run**. Deve finire con “Success”.
 3. Nuova query: copia tutto `supabase/seed/002_dati_iniziali.sql`, incolla e **Run**.
+4. Per l'inventario: nuova query con tutto `supabase/migrations/003_inventario.sql` e **Run** (crea anche l'archivio privato `inventari` per il file di G7).
 4. Controllo: esegui `select count(*), sum(pezzi) from lotti;` → deve dare **278** e **580**.
 
 Esegui ogni file **una sola volta**: rieseguirlo darebbe errore perché le tabelle esistono già.

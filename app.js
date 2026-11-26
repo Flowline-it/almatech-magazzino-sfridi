@@ -493,7 +493,8 @@ async function importFile(file) {
 $('tabs').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]'); if (!b) return;
   document.querySelectorAll('#tabs [data-tab]').forEach(x => x.setAttribute('aria-selected', x === b));
-  ['mag', 'mov', 'mat', 'chk', 'usr'].forEach(t => $('p-' + t).hidden = t !== b.dataset.tab);
+  ['mag', 'mov', 'mat', 'inv', 'chk', 'usr'].forEach(t => $('p-' + t).hidden = t !== b.dataset.tab);
+  if (b.dataset.tab === 'inv' && window.Inventario) window.Inventario.apri();
 });
 $('formaChips').addEventListener('click', e => {
   const b = e.target.closest('[data-f]'); if (!b) return;
