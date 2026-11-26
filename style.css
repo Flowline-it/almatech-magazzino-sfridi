@@ -212,3 +212,16 @@ body.resp .importbox.respOnly{display:grid!important}
 .inv-pad button:active{background:var(--accent-soft)}
 .inv-pad button:disabled{opacity:.35}
 @media (max-width:720px){.inv-filters select,.inv-filters .search{flex:1 1 140px;width:auto}}
+
+/* riga già contata: si colora tutta e i pulsanti lasciano posto a un riquadro col risultato */
+.inv-row.st-ok{background:var(--ok-soft)}
+.inv-row.st-diff{background:var(--warn-soft)}
+.inv-row.st-nt{background:var(--bad-soft)}
+.inv-row.editing{background:var(--surface);border-color:var(--accent);border-left-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.inv-done{align-self:end;min-height:46px;border-radius:9px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 6px 0 12px;font-weight:800;font-size:17px}
+.inv-done-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inv-done-t span{font-weight:600;font-size:15px;margin-left:6px}
+.inv-done.ok{background:var(--ok);color:var(--bg)}
+.inv-done.diff{background:var(--warn);color:var(--bg)}
+.inv-done.nt{background:var(--bad);color:var(--bg)}
+.inv-edit{flex:none;min-height:34px;padding:0 12px;border-radius:8px;border:2px solid currentColor;background:transparent;color:inherit;font-weight:700;font-size:14px;cursor:pointer}

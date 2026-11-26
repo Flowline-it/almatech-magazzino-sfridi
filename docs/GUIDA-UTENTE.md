@@ -62,7 +62,7 @@ Apri la scheda **Inventario**.
    - **OK**: la quantità è quella di G7;
    - **Diverso**: scrivi la quantità contata col tastierino (i decimali si usano solo per KG, MT, MQ…);
    - **Non trovato**: non c'è, vale 0.
-   Sbagliato? Premi **annulla** sotto la riga.
+   Dopo la scelta la riga si **chiude**: diventa tutta verde (OK), gialla (Diverso) o rossa (Non trovato) e i pulsanti spariscono, così non si cambia per sbaglio. Per correggere premi **Modifica** sulla riga: tornano i pulsanti. Con **Lascia com'è** si esce senza cambiare niente, con **Rimetti da verificare** si annulla il conteggio.
 4. In alto vedi l'avanzamento. Un articolo trovato ma non presente in G7: **+ Articolo non in G7** (è solo una segnalazione).
 5. Se due persone contano lo stesso articolo vale l'ultimo conteggio e compare un avviso.
 

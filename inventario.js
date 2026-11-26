@@ -5,7 +5,7 @@
  * ===================================================================== */
 (function () {
   'use strict';
-  const H = 190;                 // altezza fissa di una riga in lista (px): serve alla lista "a finestra"
+  const H = 204;                 // altezza fissa di una riga in lista (px): serve alla lista "a finestra"
   const BUFFER = 6;              // righe disegnate in più sopra e sotto lo schermo
   const POLL_MS = 20000;
   const STATI = {da: 'Da verificare', ok: 'OK', diff: 'Diverso', nt: 'Non trovato'};
@@ -20,7 +20,7 @@
 
   const I = {
     store: null, userId: null, sess: [], cur: null, rows: [], byN: new Map(), segn: [], view: [], since: '', poll: null,
-    f: {dep: '', gr: '', nz: false, st: '', neg: false, q: ''}, tot: 0, fatti: 0, raf: 0, ready: false, busy: false,
+    f: {dep: '', gr: '', nz: false, st: '', neg: false, q: ''}, tot: 0, fatti: 0, raf: 0, ready: false, busy: false, edit: new Set(),
   };
   const root = () => $('p-inv');
 
@@ -99,7 +99,7 @@
       I.cur = I.sess.find(s => s.id === id); if (!I.cur) throw new Error('Inventario non trovato.');
       I.rows = rows.sort((a, b) => a.n - b.n); I.segn = segn;
     } catch (e) { toast(errMsg(e)); await caricaElenco(); return; }
-    I.byN = new Map(I.rows.map(r => [r.n, r])); I.rows.forEach(r => { r.k = norm(r.c + r.d); });
+    I.edit.clear(); I.byN = new Map(I.rows.map(r => [r.n, r])); I.rows.forEach(r => { r.k = norm(r.c + r.d); });
     I.since = I.rows.reduce((m, r) => r.at > m ? r.at : m, '');
     I.f = {dep: '', gr: '', nz: false, st: '', neg: false, q: ''};
     disegnaDettaglio(); avviaPoll();
@@ -170,21 +170,29 @@
   function riga(r, i) {
     const chiuso = I.cur.stato === 'chiuso', d = chiuso ? ' disabled' : '';
     const meta = [r.dep ? 'Dep. ' + r.dep : 'Senza deposito', r.gr ? 'Gruppo ' + r.gr : '', r.ub ? 'Ubic. ' + r.ub : '', r.ob ? 'Obsoleto' : ''].filter(Boolean).join(' · ');
-    let cont = '', undo = '';
-    if (r.st !== 'da') {
+    const fatto = r.st !== 'da', modifica = I.edit.has(r.n) && !chiuso;
+    let cont = '', link = '', azioni;
+    if (fatto) cont = `<div class="inv-cnt">Contato da ${esc(r.by)} · ${esc(quando(r.at))}</div>`;
+    if (fatto && !modifica) {
+      // riga "chiusa": un solo grande riquadro col risultato, niente pulsanti da toccare per sbaglio
       const dif = r.q - r.g7;
-      cont = `<div class="inv-cnt">Contato: <b>${fq(r.q)} ${esc(r.um)}</b>${dif ? ` (${dif > 0 ? '+' : ''}${fq(dif)})` : ''} · ${esc(r.by)} · ${esc(quando(r.at))}</div>`;
-      if (!chiuso) undo = '<button class="linkbtn" data-act="undo" type="button">annulla</button>';
-    }
-    return `<article class="inv-row st-${r.st}" style="top:${i * H}px;height:${H - 8}px" data-n="${r.n}" role="listitem">
-      <div class="inv-r1"><b class="inv-code" title="${esc(r.c)}">${esc(r.c.trim())}</b><span class="tag ${r.st === 'ok' ? 'ok' : r.st === 'da' ? 'acc' : r.st === 'diff' ? 'warn' : 'bad'}">${STATI[r.st]}</span></div>
-      <div class="inv-desc">${esc(r.d)}</div>
-      <div class="inv-g7">G7: <b class="${r.g7 < 0 ? 'neg' : ''}">${fq(r.g7)} ${esc(r.um)}</b></div>${cont}
-      <div class="inv-meta"><span>${esc(meta)}</span>${undo}</div>
-      <div class="inv-btns">
+      const testo = r.st === 'ok' ? `✓ OK <span>${fq(r.q)} ${esc(r.um)}</span>`
+        : r.st === 'nt' ? `✗ NON TROVATO <span>0 ${esc(r.um)}</span>`
+        : `≠ DIVERSO <span>${fq(r.q)} ${esc(r.um)} (${dif > 0 ? '+' : ''}${fq(dif)})</span>`;
+      azioni = `<div class="inv-done ${r.st}"><div class="inv-done-t">${testo}</div>${chiuso ? '' : '<button class="inv-edit" data-act="edit" type="button">Modifica</button>'}</div>`;
+    } else {
+      if (modifica) link = '<span><button class="linkbtn" data-act="keep" type="button">Lascia com\'è</button> · <button class="linkbtn" data-act="undo" type="button">Rimetti da verificare</button></span>';
+      azioni = `<div class="inv-btns">
         <button class="inv-b ok" data-act="ok" aria-pressed="${r.st === 'ok'}"${d} type="button">OK</button>
         <button class="inv-b diff" data-act="diff" aria-pressed="${r.st === 'diff'}"${d} type="button">Diverso</button>
-        <button class="inv-b nt" data-act="nt" aria-pressed="${r.st === 'nt'}"${d} type="button">Non trovato</button></div>
+        <button class="inv-b nt" data-act="nt" aria-pressed="${r.st === 'nt'}"${d} type="button">Non trovato</button></div>`;
+    }
+    return `<article class="inv-row st-${r.st}${modifica ? ' editing' : ''}" style="top:${i * H}px;height:${H - 8}px" data-n="${r.n}" role="listitem">
+      <div class="inv-r1"><b class="inv-code" title="${esc(r.c)}">${esc(r.c.trim())}</b><span class="tag ${r.st === 'ok' ? 'ok' : r.st === 'da' ? 'acc' : r.st === 'diff' ? 'warn' : 'bad'}">${modifica ? 'In modifica' : STATI[r.st]}</span></div>
+      <div class="inv-desc">${esc(r.d)}</div>
+      <div class="inv-g7">G7: <b class="${r.g7 < 0 ? 'neg' : ''}">${fq(r.g7)} ${esc(r.um)}</b></div>${cont}
+      <div class="inv-meta"><span>${esc(meta)}</span>${link}</div>
+      ${azioni}
     </article>`;
   }
 
@@ -192,6 +200,7 @@
   async function conta(n, st, q) {
     if (I.cur.stato === 'chiuso') return;
     const r = I.byN.get(n); if (!r) return;
+    I.edit.delete(n);
     const patch = {st, q, by: st === 'da' ? '' : chi(), at: new Date().toISOString()};
     const prima = {st: r.st, q: r.q, by: r.by, at: r.at};
     Object.assign(r, patch); if (patch.at > I.since) I.since = patch.at;
@@ -361,6 +370,8 @@
     if (a.dataset.act === 'ok') { if (r.st !== 'ok') conta(r.n, 'ok', r.g7); }
     else if (a.dataset.act === 'nt') { if (r.st !== 'nt') conta(r.n, 'nt', 0); }
     else if (a.dataset.act === 'undo') conta(r.n, 'da', null);
+    else if (a.dataset.act === 'edit') { I.edit.add(r.n); disegna(); }
+    else if (a.dataset.act === 'keep') { I.edit.delete(r.n); disegna(); }
     else if (a.dataset.act === 'diff') tastierino(r);
   });
   root().addEventListener('change', e => {
