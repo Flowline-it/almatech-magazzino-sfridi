@@ -55,6 +55,7 @@ Flusso: **export da G7 → import nell'app → conteggio da telefono → chiusur
 
 - **Import**: il responsabile carica l'export di G7. L'app legge depositi, gruppi e articoli, scarta la riga del totale e mostra i numeri da confrontare con G7. Se le intestazioni non sono quelle attese si ferma con un messaggio.
 - **Conteggio**: elenco pensato per il telefono, con ricerca (ignora maiuscole e spazi), filtri per deposito, gruppo, stato, “solo giacenza ≠ 0” (spento di default: si contano tutti gli articoli, anche a giacenza 0) e negativi. Per ogni articolo: **OK**, **Diverso** (tastierino, decimali tranne che per PZ) o **Non trovato** (= 0). Si annota chi ha contato e quando. Gli articoli trovati ma assenti in G7 sono solo segnalazioni.
+- **Articoli a peso (KG)**: si contano metri o pezzi e l'app calcola i kg dal peso specifico (`inventario-peso.js`): propone forma e misure dalla descrizione, la persona conferma. I pesi specifici dei metalli non presenti nel magazzino sfridi sono indicativi e vanno confermati da Almatech. Prova: `node tools/test_inventario_peso.js dati-locali/export_g7_26_11_2026.xlsx`.
 - **Chiusura ed export**: riepilogo delle differenze (scaricabile) e **file per G7**. Il file parte dall'originale e cambia **solo la colonna Esistenza** degli articoli con giacenza diversa: righe di sezione, ordine, stili, formula del totale e nome del foglio restano uguali. Gli articoli non verificati mantengono la giacenza di G7. A inventario chiuso non si modifica più.
 - **Demo**: i dati stanno nell'archivio del browser (IndexedDB), solo su quel dispositivo. **Supabase**: il codice e lo schema sono pronti (`003_inventario.sql`) ma **non sono mai stati provati su un progetto vero**: vanno collaudati alla prima attivazione.
 
@@ -71,7 +72,7 @@ node tools/test_inventario_xlsx.js dati-locali/export_g7_26_11_2026.xlsx
 |---|---|---|
 | Pagina web | `index.html`, `style.css`, `app.js` | Sito statico, nessuna compilazione. Librerie da CDN: SheetJS 0.18.5 (Excel), supabase-js 2.45.4 (solo modalità Supabase) |
 | Impostazioni | `config.js` | `MODALITA: 'demo'` oppure `'supabase'`, più indirizzo e chiave del progetto Supabase |
-| Inventario | `inventario.js`, `inventario-xlsx.js`, `inventario-store.js` | Scheda **Inventario**: schermate, lettura/scrittura del file G7 (JSZip 3.10.1 da CDN), salvataggio dati (demo: archivio del browser; Supabase: tabelle e Storage) |
+| Inventario | `inventario.js`, `inventario-xlsx.js`, `inventario-peso.js`, `inventario-store.js` | Scheda **Inventario**: schermate, lettura/scrittura del file G7 (JSZip 3.10.1 da CDN), salvataggio dati (demo: archivio del browser; Supabase: tabelle e Storage) |
 | Demo | `demo.js`, `demo-data.js` | Archivio nel browser con le stesse regole del database; dati iniziali (22 materiali, 278 lotti) |
 | Database | `supabase/migrations/001_schema.sql` | Tabelle, permessi per ruolo, funzioni di prelievo/carico/rettifica |
 | Database inventario | `supabase/migrations/003_inventario.sql` | Tabelle `inventari`, `inventario_righe`, `inventario_segnalazioni`, archivio del file originale e permessi. **Non ancora eseguito**: si lancia dopo `001`, solo con l'ok di Almatech |

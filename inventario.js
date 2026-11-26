@@ -220,8 +220,10 @@
       <div class="inv-disp" id="kDisp" aria-live="polite"></div>
       <div class="inv-pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(k => `<button type="button" data-k="${k}">${k}</button>`).join('')}
         <button type="button" data-k="," ${interi ? 'disabled' : ''}>,</button><button type="button" data-k="0">0</button><button type="button" data-k="del" aria-label="Cancella">⌫</button></div>
+      ${r.um.toUpperCase() === 'KG' ? '<button class="btn" id="kCalc" type="button">Calcola i kg da metri o pezzi…</button>' : ''}
       <div class="actions"><button class="btn ghost" data-close type="button">Annulla</button><button class="btn primary" id="kOk" type="button">Salva</button></div>`);
     const disp = $('kDisp'), ok = $('kOk');
+    if ($('kCalc')) $('kCalc').addEventListener('click', () => calcolaModal(r));
     const agg = () => { disp.textContent = v === '' ? '—' : v + ' ' + r.um; ok.disabled = v === '' || v === ','; };
     const tasto = k => {
       if (k === 'del') v = v.slice(0, -1);
@@ -232,8 +234,7 @@
     modal.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => tasto(b.dataset.k)));
     const salva = () => {
       if (ok.disabled) return;
-      const q = parseFloat(v.replace(',', '.')); closeModal();
-      if (q === r.g7) conta(r.n, 'ok', r.g7); else if (q === 0) conta(r.n, 'nt', 0); else conta(r.n, 'diff', q);
+      const q = parseFloat(v.replace(',', '.')); closeModal(); applica(r, q);
     };
     ok.addEventListener('click', salva);
     const ac = new AbortController();
@@ -244,6 +245,66 @@
       else if (e.key === 'Enter') { e.preventDefault(); salva(); }
     }, {signal: ac.signal});
     agg();
+  }
+
+  /* salva un valore contato: uguale a G7 = OK, zero = non trovato, altro = diverso */
+  function applica(r, q) { if (q === r.g7) conta(r.n, 'ok', r.g7); else if (q === 0) conta(r.n, 'nt', 0); else conta(r.n, 'diff', q); }
+
+  /* articoli a peso (KG): si contano metri o pezzi e l'app calcola i kg col peso specifico */
+  function calcolaModal(r) {
+    const mats = (S.mats || []).map(m => ({g: m.g, d: m.d}));
+    const a = InvPeso.analizza(r.d), m0 = InvPeso.materiale(r.gr, r.d, mats);
+    const opz = [];
+    mats.filter(m => m.d != null).forEach(m => opz.push({fonte: 'sfridi', nome: m.g, rho: m.d}));
+    Object.entries(InvPeso.INDICATIVI).filter(([k]) => !/ACCIAIAL/.test(k)).forEach(([k, v]) => opz.push({fonte: 'indicativo', nome: k, rho: v}));
+    const iSel = m0 ? opz.findIndex(o => o.nome === m0.nome && o.fonte === m0.fonte) : -1;
+    const fmtV = x => x == null ? '' : String(x).replace('.', ',');
+    openModal(`<h3>Calcola i kg</h3>
+      <p class="calc" style="margin:0"><b>${esc(r.c.trim())}</b> · ${esc(r.d)}<br>In G7: <b>${fq(r.g7)} ${esc(r.um)}</b></p>
+      <div class="field"><label for="pF">Cosa hai contato</label><select id="pF">
+        <option value="tondo"${a.forma === 'tondo' ? ' selected' : ''}>Barra tonda — conto i metri</option>
+        <option value="tubo"${a.forma === 'tubo' ? ' selected' : ''}>Barra forata o tubo — conto i metri</option>
+        <option value="lastra"${a.forma === 'lastra' ? ' selected' : ''}>Lastra o lista — conto i pezzi</option></select></div>
+      <div class="field"><label for="pM">Materiale</label><select id="pM"><option value="">Altro: scrivo io il peso specifico</option>
+        <optgroup label="Dal magazzino sfridi">${opz.map((o, i) => o.fonte === 'sfridi' ? `<option value="${i}"${i === iSel ? ' selected' : ''}>${esc(o.nome)} (${fmtV(o.rho)})</option>` : '').join('')}</optgroup>
+        <optgroup label="Valori indicativi, da confermare">${opz.map((o, i) => o.fonte === 'indicativo' ? `<option value="${i}"${i === iSel ? ' selected' : ''}>${esc(o.nome)} (${fmtV(o.rho)})</option>` : '').join('')}</optgroup></select></div>
+      <div class="field"><label for="pR">Peso specifico (g/cm³)</label><input id="pR" inputmode="decimal" autocomplete="off" value="${m0 ? fmtV(m0.rho) : ''}"></div>
+      <p class="calc" id="pNota" style="margin:0"></p>
+      <div class="fields" id="pDim"></div>
+      <div class="inv-calc" id="pRes" aria-live="polite"></div>
+      <div class="actions"><button class="btn ghost" id="pBack" type="button">Indietro</button><button class="btn primary" id="pOk" type="button" disabled>Usa questo valore</button></div>`);
+    const campi = {
+      tondo: [['de', '∅ (mm)', a.de], ['metri', 'Metri totali', null]],
+      tubo: [['de', '∅ esterno (mm)', a.de], ['di', '∅ interno (mm)', a.di], ['metri', 'Metri totali', null]],
+      lastra: [['sp', 'Spessore (mm)', a.sp], ['la', 'Larghezza (mm)', a.la], ['lu', 'Lunghezza (mm)', a.lu], ['pezzi', 'Numero di pezzi', null]],
+    };
+    const memo = {}; let q = null;
+    const calcola = () => {
+      const f = $('pF').value, v = {};
+      campi[f].forEach(([k]) => { v[k] = parseNum($('p_' + k).value); memo[k] = $('p_' + k).value; });
+      q = InvPeso.calcola(f, v, parseNum($('pR').value));
+      $('pRes').innerHTML = q == null ? 'Compila tutti i campi per vedere i kg.' : `= <b>${fq(q)} kg</b> <small>(G7: ${fq(r.g7)} kg, differenza ${q - r.g7 > 0 ? '+' : ''}${fq(Math.round((q - r.g7) * 100) / 100)})</small>`;
+      $('pOk').disabled = q == null;
+    };
+    const dim = () => {
+      const f = $('pF').value;
+      $('pDim').innerHTML = campi[f].map(([k, lab, pre]) => `<div class="field"><label for="p_${k}">${lab}</label><input id="p_${k}" inputmode="decimal" autocomplete="off" size="8" value="${memo[k] != null ? esc(memo[k]) : fmtV(pre)}"></div>`).join('');
+      modal.querySelectorAll('#pDim input').forEach(i => i.addEventListener('input', calcola));
+      calcola();
+    };
+    const nota = () => {
+      const i = $('pM').value;
+      if (i !== '') { $('pR').value = fmtV(opz[+i].rho); $('pNota').textContent = opz[+i].fonte === 'sfridi' ? 'Peso specifico preso dal magazzino sfridi.' : 'Valore indicativo da manuale: va confermato con Almatech. Puoi correggerlo.'; }
+      else $('pNota').textContent = 'Scrivi il peso specifico del materiale.';
+      calcola();
+    };
+    $('pF').addEventListener('change', dim);
+    $('pM').addEventListener('change', nota);
+    $('pR').addEventListener('input', () => { $('pM').value = ''; $('pNota').textContent = 'Peso specifico scritto a mano.'; calcola(); });
+    $('pBack').addEventListener('click', () => tastierino(r));
+    $('pOk').addEventListener('click', () => { if (q != null) { closeModal(); applica(r, q); } });
+    $('pNota').textContent = m0 ? (m0.fonte === 'sfridi' ? 'Peso specifico preso dal magazzino sfridi.' : 'Valore indicativo da manuale: va confermato con Almatech. Puoi correggerlo.') : 'Materiale non riconosciuto: sceglilo o scrivi il peso specifico.';
+    dim();
   }
 
   function segnalaModal() {
